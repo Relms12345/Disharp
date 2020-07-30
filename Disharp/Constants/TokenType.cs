@@ -3,9 +3,10 @@ using Newtonsoft.Json.Converters;
 
 namespace Disharp.Constants
 {
-	[JsonConverter(typeof(StringEnumConverter))]  
-	public enum EncodingType
+	[JsonConverter(typeof(StringEnumConverter))]
+	public enum TokenType
 	{
-		Json
+		Bot,
+		Bearer
 	}
 }

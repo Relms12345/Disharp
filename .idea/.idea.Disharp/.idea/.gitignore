@@ -1,0 +1,11 @@
+﻿# Default ignored files
+/shelf/
+/workspace.xml
+# Rider ignored files
+/contentModel.xml
+/projectSettingsUpdater.xml
+/modules.xml
+/.idea.Disharp.iml
+# Datasource local storage ignored files
+/../../../../../../../../:\Codes\C#\Discord API\Disharp\.idea\.idea.Disharp\.idea/dataSources/
+/dataSources.local.xml
