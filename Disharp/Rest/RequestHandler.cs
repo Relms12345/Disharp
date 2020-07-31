@@ -140,9 +140,7 @@ namespace Disharp.Rest
 			}
 
 			var retryAfter = 0;
-
-			Console.WriteLine(JsonConvert.SerializeObject(res.Headers, Formatting.Indented));
-
+			
 			var limit = res.Headers.ToArray().ToList().Find(x => x.Name == "x-ratelimit-limit");
 			var remaining = res.Headers.ToArray().ToList().Find(x => x.Name == "x-ratelimit-remaining");
 			var reset = res.Headers.ToArray().ToList().Find(x => x.Name == "x-ratelimit-reset-after");

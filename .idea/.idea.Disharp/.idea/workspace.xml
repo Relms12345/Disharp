@@ -22,19 +22,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="68775ab4-57ff-4e26-877e-c551d1b739ec" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.Disharp/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Disharp/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Disharp/Client/DisharpClient.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Disharp/Client/DisharpClient.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Disharp/Rest/CDN.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Disharp/Rest/Cdn.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Disharp/Rest/DisharpRestClient.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Disharp/Rest/DisharpRestClient.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Disharp/Rest/ImageUrlOptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Disharp/Rest/ImageUrlOptions.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Disharp/Rest/Queue/AsyncQueue.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Disharp/Rest/Queue/AsyncQueue.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Disharp/Rest/RequestHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Disharp/Rest/RequestHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Disharp/Rest/RestManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Disharp/Rest/RestManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Disharp/Utils/IntentsBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Disharp/Utils/IntentsBuilder.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Disharp/WebSocket/DisharpWebSocketClient.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Disharp/WebSocket/DisharpWebSocketClient.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Disharp/WebSocket/DisharpWebSocketClientOptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Disharp/WebSocket/DisharpWebSocketClientOptions.cs" afterDir="false" />
-    </list>
+    <list default="true" id="68775ab4-57ff-4e26-877e-c551d1b739ec" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -193,7 +181,7 @@
       <workItem from="1595987411025" duration="7421000" />
       <workItem from="1596055705846" duration="20774000" />
       <workItem from="1596133070613" duration="6911000" />
-      <workItem from="1596144277689" duration="20023000" />
+      <workItem from="1596144277689" duration="20411000" />
     </task>
     <servers />
   </component>
