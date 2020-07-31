@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Disharp.Utils;
-using RSG;
 
 namespace Disharp.Rest.Queue
 {
@@ -20,7 +18,6 @@ namespace Disharp.Rest.Queue
 			var next = Tasks.Count != 0
 				? Tasks.ToArray()[Tasks.Count - 1].Promise
 				: new Task<InternalAsyncQueueDeferredTask>(() => new InternalAsyncQueueDeferredTask());
-			Action<InternalAsyncQueueDeferredTask> resolve = null;
 
 			var promise = new Task<InternalAsyncQueueDeferredTask>(() => new InternalAsyncQueueDeferredTask());
 

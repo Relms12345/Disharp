@@ -2,9 +2,9 @@
 
 namespace Disharp.Rest
 {
-	public class CDN
+	public class Cdn
 	{
-		public CDN(string strBase)
+		public Cdn(string strBase)
 		{
 			Base = strBase;
 		}
@@ -61,15 +61,15 @@ namespace Disharp.Rest
 			return MakeUrl($"/team-icons/{teamId}/{iconHash}", options);
 		}
 
-		public string userAvatar(string userID, string avatarHash, ImageUrlOptions options)
+		public string UserAvatar(string userId, string avatarHash, ImageUrlOptions options)
 		{
-			if (options.Dynamic) options.Extention = avatarHash.StartsWith("a_") ? "gif" : options.Extention;
-			return MakeUrl($"/avatars/{userID}/{avatarHash}", options);
+			if (options.Dynamic) options.Extension = avatarHash.StartsWith("a_") ? "gif" : options.Extension;
+			return MakeUrl($"/avatars/{userId}/{avatarHash}", options);
 		}
 
 		private string MakeUrl(string endpoint, ImageUrlOptions options)
 		{
-			var extension = Convert.ToString(options.Extention).ToLower();
+			var extension = Convert.ToString(options.Extension)?.ToLower();
 
 			var url = new Uri($"{Base}{endpoint}.{extension}?size={options.Size}");
 

@@ -10,18 +10,18 @@ namespace Disharp.Rest
 		public DisharpRestClient(DisharpClient client)
 		{
 			Client = client;
-			manager = new RestManager(Client, this);
-			cdn = new CDN(Client.ClientOptions.RestOptions.CdnUrl.ToString());
+			Manager = new RestManager(Client, this);
+			Cdn = new Cdn(Client.ClientOptions.RestOptions.CdnUrl.ToString());
 		}
 
-		public CDN cdn { get; set; }
+		public Cdn Cdn { get; set; }
 
-		private RestManager manager { get; }
+		private RestManager Manager { get; }
 		private DisharpClient Client { get; }
 
 		public Task<dynamic> Get(string endpoint, RestRequestOptions options)
 		{
-			return manager.QueueRequest(new RestReq
+			return Manager.QueueRequest(new RestReq
 			{
 				Auth = true,
 				Data = options.Data,
@@ -35,7 +35,7 @@ namespace Disharp.Rest
 
 		public dynamic Delete(string endpoint, RestRequestOptions options)
 		{
-			return manager.QueueRequest(new RestReq
+			return Manager.QueueRequest(new RestReq
 			{
 				Auth = true,
 				Data = options.Data,
@@ -50,7 +50,7 @@ namespace Disharp.Rest
 
 		public dynamic Patch(string endpoint, RestRequestOptions options)
 		{
-			return manager.QueueRequest(new RestReq
+			return Manager.QueueRequest(new RestReq
 			{
 				Auth = true,
 				Data = options.Data,
@@ -65,7 +65,7 @@ namespace Disharp.Rest
 
 		public dynamic Put(string endpoint, RestRequestOptions options)
 		{
-			return manager.QueueRequest(new RestReq
+			return Manager.QueueRequest(new RestReq
 			{
 				Auth = true,
 				Data = options.Data,
@@ -80,7 +80,7 @@ namespace Disharp.Rest
 
 		public dynamic Post(string endpoint, RestRequestOptions options)
 		{
-			return manager.QueueRequest(new RestReq
+			return Manager.QueueRequest(new RestReq
 			{
 				Auth = true,
 				Data = options.Data,

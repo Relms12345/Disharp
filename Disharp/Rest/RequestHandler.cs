@@ -20,8 +20,8 @@ namespace Disharp.Rest
 		{
 			Id = $"{hash}:{majorParameter}";
 
-			_manager = manager;
-			_client = client;
+			Manager = manager;
+			Client = client;
 			Hash = hash;
 		}
 
@@ -32,8 +32,8 @@ namespace Disharp.Rest
 		private long Limit { get; set; } = long.MaxValue;
 		private string Hash { get; }
 		private AsyncQueue Queue { get; } = new AsyncQueue();
-		private RestManager _manager { get; }
-		private DisharpClient _client { get; }
+		private RestManager Manager { get; }
+		private DisharpClient Client { get; }
 
 		public bool Inactive()
 		{
@@ -52,26 +52,24 @@ namespace Disharp.Rest
 
 		public async Task<dynamic> Push(RouteIdentifier routeId, string url, RestReq options)
 		{
-			Queue.Wait();
+			await Queue.Wait();
 			try
 			{
-				var temp = _manager.GlobalTimeout;
-				if (Limited())
-				{
-					// Let library users know they have hit a ratelimit
-					// this._manager.Rest.emit(RESTManagerEvents.Ratelimited, {
-					// 	timeToReset: this.TimeToReset,
-					// 	limit: this.limit,
-					// 	method: options.method,
-					// 	hash: this.hash,
-					// 	route: routeID.route,
-					// 	majorParameter: this.majorParameter
-					// });
+				var temp = Manager.GlobalTimeout;
+				if (!Limited()) return await MakeRequest(routeId, url, options);
+				// Let library users know they have hit a ratelimit
+				// this._manager.Rest.emit(RESTManagerEvents.Ratelimited, {
+				// 	timeToReset: this.TimeToReset,
+				// 	limit: this.limit,
+				// 	method: options.method,
+				// 	hash: this.hash,
+				// 	route: routeID.route,
+				// 	majorParameter: this.majorParameter
+				// });
 
-					Console.WriteLine("R8 LIMIT!");
+				Console.WriteLine("R8 LIMIT!");
 
-					await Task.Delay(Convert.ToInt32(TimeToReset()));
-				}
+				await Task.Delay(Convert.ToInt32(TimeToReset()));
 
 				return await MakeRequest(routeId, url, options);
 			}
@@ -85,7 +83,7 @@ namespace Disharp.Rest
 		{
 			var controller = new CancellationTokenSource();
 
-			var abortTimer = new Timer(_client.ClientOptions.RestOptions.Timeout.TotalMilliseconds)
+			var abortTimer = new Timer(Client.ClientOptions.RestOptions.Timeout.TotalMilliseconds)
 			{
 				AutoReset = false
 			};
@@ -114,25 +112,20 @@ namespace Disharp.Rest
 					foreach (var file in options.Files)
 						restRequest.AddFile(file.Name, file.Writer, file.FileName, file.ContentLength, file.ContentType);
 
-				if (options.Data != null)
-				{
-					restRequest.AddJsonBody(options.Data);
-				}
+				if (options.Data != null) restRequest.AddJsonBody(options.Data);
 
 				switch (options.Method)
 				{
 					case Method.GET:
-						res = _manager.RestClient.Get(restRequest);
+						res = Manager.RestClient.Get(restRequest);
 						break;
 					case Method.POST:
-						res = _manager.RestClient.Post(restRequest);
+						res = Manager.RestClient.Post(restRequest);
 						break;
 					default:
-						res = _manager.RestClient.Get(restRequest);
+						res = Manager.RestClient.Get(restRequest);
 						break;
 				}
-				
-				
 			}
 			catch (Exception error)
 			{
@@ -147,7 +140,7 @@ namespace Disharp.Rest
 			}
 
 			var retryAfter = 0;
-			
+
 			Console.WriteLine(JsonConvert.SerializeObject(res.Headers, Formatting.Indented));
 
 			var limit = res.Headers.ToArray().ToList().Find(x => x.Name == "x-ratelimit-limit");
@@ -161,53 +154,50 @@ namespace Disharp.Rest
 			Limit = limit != null ? Convert.ToInt32(limit.Value) : int.MaxValue;
 			Remaining = remaining != null ? Convert.ToInt32(remaining.Value) : int.MaxValue;
 			Reset = reset != null
-				? Convert.ToInt32(reset.Value) * 1000 + new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds() + _client.ClientOptions.RestOptions.Offset
+				? Convert.ToInt32(reset.Value) * 1000 + new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds() +
+				  Client.ClientOptions.RestOptions.Offset
 				: new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
 
 			if (retry != null)
 				retryAfter = Convert.ToInt32(retry.Value) * (cloudflare ? 1000 : 1) +
-				             _client.ClientOptions.RestOptions.Offset;
+				             Client.ClientOptions.RestOptions.Offset;
 
 			if (hash != null && Convert.ToString(hash.Value) != Hash)
 				// this.manager.rest.emit(RESTManagerEvents.Debug, `Bucket hash update: ${this.hash} => ${hash} for ${options.method}-${routeID.route}`);
-				if (!_manager.Hashes.ContainsKey($"{options.Method}-${routeId.Route}"))
-					_manager.Hashes.Add($"{options.Method}-${routeId.Route}", Convert.ToString(hash.Value));
+				if (!Manager.Hashes.ContainsKey($"{options.Method}-${routeId.Route}"))
+					Manager.Hashes.Add($"{options.Method}-${routeId.Route}", Convert.ToString(hash.Value));
 
 			if (res.Headers.ToArray().ToList().Find(x => x.Name == "x-ratelimit-global") != null)
 			{
-				_manager.GlobalTimeout = new Promise();
+				Manager.GlobalTimeout = new Promise();
 				Thread.Sleep(retryAfter);
-				_manager.GlobalTimeout = null;
+				Manager.GlobalTimeout = null;
 			}
 
 			if (res.IsSuccessful) return ParseResponse(res);
 
-			if (res.StatusCode == HttpStatusCode.TooManyRequests)
+			switch (res.StatusCode)
 			{
-				// this.manager.rest.emit(RESTManagerEvents.Debug, `429 hit on route: ${routeID.route}\nRetrying after: ${retryAfter}ms`);
-				Console.WriteLine("R8 LIMIT!");
-				await Task.Delay(retryAfter);
-				return await MakeRequest(routeId, url, options, retries);
-			}
-
-			if (res.StatusCode == HttpStatusCode.InternalServerError)
-			{
-				if (retries != _client.ClientOptions.RestOptions.Retries)
+				case HttpStatusCode.TooManyRequests:
+					// this.manager.rest.emit(RESTManagerEvents.Debug, `429 hit on route: ${routeID.route}\nRetrying after: ${retryAfter}ms`);
+					Console.WriteLine("R8 LIMIT!");
+					await Task.Delay(retryAfter);
+					return await MakeRequest(routeId, url, options, retries);
+				case HttpStatusCode.InternalServerError when retries != Client.ClientOptions.RestOptions.Retries:
 					return await MakeRequest(routeId, url, options, ++retries);
-
-				Console.WriteLine("ERROR BITCH!");
 				// throw new HTTPError(res.statusText, res.constructor.name, res.status, options.method as string, url);
-			}
-			else
-			{
-				if (res.StatusCode == HttpStatusCode.BadRequest)
+				case HttpStatusCode.InternalServerError:
+					Console.WriteLine("ERROR BITCH!");
+					break;
+				default:
 				{
+					if (res.StatusCode != HttpStatusCode.BadRequest) return null;
 					var data = await ParseResponse(res);
 					Console.WriteLine("MALFORMED DATA!");
 					// throw new DiscordAPIError(data.message, data.code, res.status, options.method as string, url);
-				}
 
-				return null;
+					return null;
+				}
 			}
 
 			return null;
@@ -215,7 +205,7 @@ namespace Disharp.Rest
 
 		private static dynamic ParseResponse(IRestResponse res)
 		{
-			if (res.Headers.ToArray().ToList().Find(x => x.Name == "Content-Type").Value.ToString()
+			if (res.Headers.ToArray().ToList().Find(x => x.Name == "Content-Type")!.Value!.ToString()!
 				.StartsWith("application/json"))
 				return res.Content;
 

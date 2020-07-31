@@ -6,7 +6,7 @@ namespace Disharp.WebSocket
 {
 	public sealed class DisharpWebSocketClientOptions
 	{
-		public Uri GatewayURL { get; set; } = new Uri("wss://gateway.discord.gg/");
+		public Uri GatewayUrl { get; set; } = new Uri("wss://gateway.discord.gg/");
 
 		public int GatewayVersion { get; set; } = 7;
 

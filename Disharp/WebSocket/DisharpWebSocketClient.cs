@@ -27,7 +27,7 @@ namespace Disharp.WebSocket
 		internal async Task ConnectAsync()
 		{
 			_webSocketClient = new WebSocketSharp.WebSocket(
-				$"{_client.ClientOptions.WsOptions.GatewayURL}?v={_client.ClientOptions.WsOptions.GatewayVersion}&encoding={_client.ClientOptions.WsOptions.EncodingType}");
+				$"{_client.ClientOptions.WsOptions.GatewayUrl}?v={_client.ClientOptions.WsOptions.GatewayVersion}&encoding={_client.ClientOptions.WsOptions.EncodingType}");
 
 			_webSocketClient.OnMessage += _onWsMessage;
 
@@ -52,7 +52,7 @@ namespace Disharp.WebSocket
 					NullValueHandling = NullValueHandling.Ignore
 				});
 
-			if (deserializedPayload.S != 0 || deserializedPayload.S != null) _sequence = deserializedPayload.S;
+			if (deserializedPayload.S != 0) _sequence = deserializedPayload.S;
 
 			switch (deserializedPayload.Op)
 			{
@@ -112,7 +112,7 @@ namespace Disharp.WebSocket
 						Op = 2,
 						D = new IdentifyPayload
 						{
-							Token = _client._token,
+							Token = _client.Token,
 							Properties = new IdentifyPropertiesPayload
 							{
 								Browser = "Disharp",

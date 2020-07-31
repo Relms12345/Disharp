@@ -17,7 +17,7 @@ namespace Disharp.Rest
 		public RestManager(DisharpClient client, DisharpRestClient rest)
 		{
 			_client = client;
-			_token = _client._token;
+			_token = _client.Token;
 			_sweeper = new Timer(300000);
 
 			RestClient = new RestClient();
@@ -115,7 +115,7 @@ namespace Disharp.Rest
 					throw new NullReferenceException(
 						"No bot token has been provided, and is required for the action you are trying to do.");
 				// Provide authorization headers
-				headers.Authorization = $"{_client._tokenType} {_token}";
+				headers.Authorization = $"{_client.TokenType} {_token}";
 			}
 
 			if (request.Reason != null) headers.XAuditLogReason = Uri.EscapeDataString(request.Reason);

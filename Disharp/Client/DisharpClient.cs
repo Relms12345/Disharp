@@ -8,7 +8,7 @@ using Disharp.WebSocket;
 
 namespace Disharp.Client
 {
-	public class DisharpClient
+	public sealed class DisharpClient
 	{
 		public DisharpClient(DisharpClientOptions clientOptions)
 		{
@@ -24,15 +24,15 @@ namespace Disharp.Client
 		public Dictionary<string, UnavailableGuild> UnavailableGuilds { get; set; } =
 			new Dictionary<string, UnavailableGuild>();
 
-		internal TokenType _tokenType { get; set; }
-		internal string _token { get; set; }
+		internal TokenType TokenType { get; set; }
+		internal string Token { get; set; }
 
 		public event EventHandler Ready;
 
 		public async Task LoginAsync(TokenType tokenType, string token)
 		{
-			_tokenType = tokenType;
-			_token = token;
+			TokenType = tokenType;
+			Token = token;
 
 			Ws = new DisharpWebSocketClient(this);
 			Rest = new DisharpRestClient(this);
@@ -40,7 +40,7 @@ namespace Disharp.Client
 			await Ws.ConnectAsync();
 		}
 
-		protected internal virtual void ReadyEvent(EventArgs e)
+		internal void ReadyEvent(EventArgs e)
 		{
 			var handler = Ready;
 			handler?.Invoke(this, e);
