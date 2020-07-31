@@ -25,20 +25,43 @@
             </e>
           </e>
         </e>
-        <e p="Structures" t="Include">
-          <e p="DiscordGatewayPayload.cs" t="Include" />
-          <e p="SpecificPayloadData" t="Include">
-            <e p="HelloPayload.cs" t="Include" />
-            <e p="IdentifyPayload.cs" t="Include" />
+        <e p="Rest" t="Include">
+          <e p="CDN.cs" t="Include" />
+          <e p="DisharpRestClient.cs" t="Include" />
+          <e p="DisharpRestClientOptions.cs" t="Include" />
+          <e p="ImageUrlOptions.cs" t="Include" />
+          <e p="Queue" t="Include">
+            <e p="AsyncQueue.cs" t="Include" />
           </e>
+          <e p="RequestHandler.cs" t="Include" />
+          <e p="RestManager.cs" t="Include" />
+        </e>
+        <e p="Structures" t="Include">
+          <e p="ClientUser.cs" t="Include" />
+          <e p="UnavailableGuild.cs" t="Include" />
+        </e>
+        <e p="Types" t="Include">
+          <e p="RestReq.cs" t="Include" />
+          <e p="RESTRequestOptions.cs" t="Include" />
+          <e p="RouteIdentifier.cs" t="Include" />
         </e>
         <e p="Utils" t="Include">
           <e p="IntentsBuilder.cs" t="Include" />
           <e p="PresenceBuilder.cs" t="Include" />
+          <e p="ShiftArray.cs" t="Include" />
+          <e p="Snowflake.cs" t="Include" />
         </e>
         <e p="WebSocket" t="Include">
           <e p="DisharpWebSocketClient.cs" t="Include" />
           <e p="DisharpWebSocketClientOptions.cs" t="Include" />
+          <e p="Payloads" t="Include">
+            <e p="DiscordGatewayPayload.cs" t="Include" />
+            <e p="SpecificPayloadData" t="Include">
+              <e p="HelloPayload.cs" t="Include" />
+              <e p="IdentifyPayload.cs" t="Include" />
+              <e p="ReadyPayload.cs" t="Include" />
+            </e>
+          </e>
         </e>
       </e>
       <e p="Disharp.sln" t="IncludeFlat" />

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Disharp.Structures
+namespace Disharp.WebSocket.Payloads
 {
 	public class DiscordGatewayPayload<Type> where Type : notnull
 	{
@@ -12,7 +12,7 @@ namespace Disharp.Structures
 
 		[JsonProperty("t")] public string T { get; set; }
 	}
-	
+
 	public class DiscordGatewayPartialPayload<Type> where Type : notnull
 	{
 		[JsonProperty("op")] public int Op { get; set; }

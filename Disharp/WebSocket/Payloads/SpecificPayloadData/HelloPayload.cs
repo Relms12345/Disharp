@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Disharp.Structures.SpecificPayloadData
+namespace Disharp.WebSocket.Payloads.SpecificPayloadData
 {
 	public class HelloPayload
 	{

@@ -3,7 +3,8 @@ using System.Threading.Tasks;
 using System.Timers;
 using Disharp.Client;
 using Disharp.Structures;
-using Disharp.Structures.SpecificPayloadData;
+using Disharp.WebSocket.Payloads;
+using Disharp.WebSocket.Payloads.SpecificPayloadData;
 using Newtonsoft.Json;
 using WebSocketSharp;
 
@@ -20,7 +21,8 @@ namespace Disharp.WebSocket
 		private WebSocketSharp.WebSocket _webSocketClient { get; set; }
 		private Timer heartbeatTimer { get; set; }
 
-		internal dynamic _sequence { get; set; } = null;
+		internal dynamic _sequence { get; set; }
+		internal string _sessionId { get; set; }
 
 		internal async Task ConnectAsync()
 		{
@@ -50,11 +52,8 @@ namespace Disharp.WebSocket
 					NullValueHandling = NullValueHandling.Ignore
 				});
 
-			if (deserializedPayload.S != 0 || deserializedPayload.S != null)
-			{
-				_sequence = deserializedPayload.S;
-			}
-			
+			if (deserializedPayload.S != 0 || deserializedPayload.S != null) _sequence = deserializedPayload.S;
+
 			switch (deserializedPayload.Op)
 			{
 				case 0:
@@ -63,12 +62,33 @@ namespace Disharp.WebSocket
 					{
 						case "READY":
 						{
-							
+							var readyPayload =
+								JsonConvert.DeserializeObject<DiscordGatewayPayload<ReadyPayload>>(
+									JsonConvert.SerializeObject(deserializedPayload));
+
+							foreach (var UnavailableGuild in readyPayload.D.UnavailableGuilds)
+								_client.UnavailableGuilds.Add(UnavailableGuild.Id, UnavailableGuild);
+
+							_client.ClientUser = new ClientUser
+							{
+								Avatar = readyPayload.D.User.Avatar,
+								Bot = readyPayload.D.User.Bot,
+								Discriminator = readyPayload.D.User.Discriminator,
+								Flags = readyPayload.D.User.Flags,
+								Id = readyPayload.D.User.Id,
+								Username = readyPayload.D.User.Username
+							};
+
+							_sessionId = readyPayload.D.SessionId;
+
 							heartbeatTimer.Start();
 							heartbeatTimer.Elapsed += heartbeat;
+
+							_client.ReadyEvent(EventArgs.Empty);
 							break;
 						}
 					}
+
 					break;
 				}
 				case 10:
@@ -83,7 +103,7 @@ namespace Disharp.WebSocket
 						heartbeatTimer.Stop();
 						heartbeatTimer.Dispose();
 					}
-				
+
 					heartbeatTimer = new Timer(helloPayload.D.HeartbeatInterval);
 					heartbeatTimer.AutoReset = true;
 
@@ -105,7 +125,7 @@ namespace Disharp.WebSocket
 							Intents = _client.ClientOptions.WsOptions.Intents
 						}
 					};
-				
+
 					Send(identifyPayload);
 					break;
 				}
@@ -122,16 +142,16 @@ namespace Disharp.WebSocket
 				Op = 1,
 				D = _sequence
 			};
-			
+
 			Send(heartBeatPayload);
 		}
 
 		private void Send(object data)
 		{
 			var payload = JsonConvert.SerializeObject(data);
-			
+
 			Console.WriteLine(payload);
-			
+
 			_webSocketClient.Send(payload);
 		}
 	}
