@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using Disharp.Client;
+using Disharp.Client.EventArgs;
 using Disharp.Structures;
 using Disharp.WebSocket.Payloads;
 using Disharp.WebSocket.Payloads.SpecificPayloadData;
@@ -21,7 +21,7 @@ namespace Disharp.WebSocket
 		private DisharpClient Client { get; }
 		private WebSocketSharp.WebSocket WebSocketClient { get; set; }
 		private Timer HeartbeatTimer { get; set; }
-		private int InitialGuilds { get; set; } = 0;
+		private int InitialGuilds { get; set; }
 
 		internal dynamic Sequence { get; set; }
 		internal string SessionId { get; set; }
@@ -31,10 +31,7 @@ namespace Disharp.WebSocket
 			WebSocketClient = new WebSocketSharp.WebSocket(
 				$"{Client.ClientOptions.WsOptions.GatewayUrl}?v={Client.ClientOptions.WsOptions.GatewayVersion}&encoding={Client.ClientOptions.WsOptions.EncodingType}");
 
-			WebSocketClient.OnMessage += async (sender, msg) =>
-			{
-				await _onWsMessage(sender, msg);
-			};
+			WebSocketClient.OnMessage += async (sender, msg) => { await _onWsMessage(sender, msg); };
 
 			WebSocketClient.OnClose += _onWsClose;
 
@@ -87,7 +84,7 @@ namespace Disharp.WebSocket
 							HeartbeatTimer.Elapsed += Heartbeat;
 
 							InitialGuilds = readyPayload.D.UnavailableGuilds.Length;
-							
+
 							break;
 						}
 						case "GUILD_CREATE":
@@ -99,11 +96,11 @@ namespace Disharp.WebSocket
 							if (guildPayload.D.Lazy)
 							{
 								InitialGuilds--;
-								await Client.Guilds.GetOrCreateAsync(guildPayload.D.Id, async () => JsonConvert.DeserializeObject<DiscordGatewayPayload<Guild>>(JsonConvert.SerializeObject(guildPayload)).D);
-								if (InitialGuilds == 0)
-								{
-									Client.ReadyEvent(EventArgs.Empty);
-								}
+								await Client.Guilds.GetOrCreateAsync(guildPayload.D.Id,
+									async () => JsonConvert
+										.DeserializeObject<DiscordGatewayPayload<Guild>>(JsonConvert.SerializeObject(guildPayload)).D);
+								
+								if (InitialGuilds == 0) Client.ReadyEvent(EventArgs.Empty);
 							}
 							else
 							{
@@ -111,14 +108,78 @@ namespace Disharp.WebSocket
 
 								if (seeIfGuildWasUnavailable == null)
 								{
-									var guild = await Client.Guilds.GetOrCreateAsync(guildPayload.D.Id, async () => JsonConvert.DeserializeObject<DiscordGatewayPayload<Guild>>(JsonConvert.SerializeObject(guildPayload)).D);
+									var guild = await Client.Guilds.GetOrCreateAsync(guildPayload.D.Id,
+										async () => JsonConvert
+											.DeserializeObject<DiscordGatewayPayload<Guild>>(JsonConvert.SerializeObject(guildPayload)).D);
+									
 									Client.GuildCreateEvent(guild);
 								}
 								else
 								{
-									var guild = await Client.Guilds.GetOrCreateAsync(guildPayload.D.Id, async () => JsonConvert.DeserializeObject<DiscordGatewayPayload<Guild>>(JsonConvert.SerializeObject(guildPayload)).D);
+									var guild = await Client.Guilds.GetOrCreateAsync(guildPayload.D.Id,
+										async () => JsonConvert
+											.DeserializeObject<DiscordGatewayPayload<Guild>>(JsonConvert.SerializeObject(guildPayload)).D);
 									await Client.UnavailableGuilds.DeleteAsync(guildPayload.D.Id);
+									
 									Client.GuildAvailableEvent(guild);
+								}
+							}
+
+							break;
+						}
+						case "GUILD_UPDATE":
+						{
+							var guildPayload =
+								JsonConvert.DeserializeObject<DiscordGatewayPayload<GuildUpdatePayload>>(
+									JsonConvert.SerializeObject(deserializedPayload));
+							
+							var findGuild = await Client.Guilds.GetAsync(guildPayload.D.Id);
+
+							if (findGuild == null)
+							{
+								// TODO: Create the route struct so that i can get the guild and add it to cache.
+							}
+							else
+							{
+								var newGuild = await Client.Guilds.UpdateAsync(guildPayload.D.Id,
+									JsonConvert.DeserializeObject<DiscordGatewayPayload<Guild>>(
+										JsonConvert.SerializeObject(deserializedPayload)).D);
+								
+								Client.GuildUpdateEvent(new GuildUpdateEventArgs
+								{
+									NewGuild = newGuild,
+									OldGuild = findGuild
+								});
+							}
+
+							break;
+						}
+						case "GUILD_DELETE":
+						{
+							var guildPayload =
+								JsonConvert.DeserializeObject<DiscordGatewayPayload<GuildDeletePayload>>(
+									JsonConvert.SerializeObject(deserializedPayload));
+							
+							var findGuild = await Client.Guilds.GetAsync(guildPayload.D.Id);
+
+							if (findGuild == null)
+							{
+								// TODO: Create the route struct/class so that i can get the guild and add it to cache.
+							}
+							else
+							{
+								await Client.Guilds.DeleteAsync(guildPayload.D.Id);
+								
+								if (guildPayload.D.Unavailable)
+								{
+									var unavailableGuild =
+										await Client.UnavailableGuilds.GetOrCreateAsync(guildPayload.D.Id, async () => findGuild);
+									
+									Client.GuildUnavailableEvent(unavailableGuild);
+								}
+								else
+								{
+									Client.GuildDeleteEvent(findGuild);
 								}
 							}
 

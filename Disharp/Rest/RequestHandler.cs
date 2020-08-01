@@ -148,7 +148,7 @@ namespace Disharp.Rest
 			}
 
 			var retryAfter = 0;
-			
+
 			var limit = res.Headers.ToArray().ToList().Find(x => x.Name == "x-ratelimit-limit");
 			var remaining = res.Headers.ToArray().ToList().Find(x => x.Name == "x-ratelimit-remaining");
 			var reset = res.Headers.ToArray().ToList().Find(x => x.Name == "x-ratelimit-reset-after");
