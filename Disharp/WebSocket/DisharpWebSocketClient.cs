@@ -87,6 +87,7 @@ namespace Disharp.WebSocket
 
 							break;
 						}
+						
 						case "GUILD_CREATE":
 						{
 							var guildPayload =

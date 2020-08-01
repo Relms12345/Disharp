@@ -9,6 +9,6 @@ namespace Disharp.WebSocket.Payloads.SpecificPayloadData
 
 		[JsonProperty("session_id")] public string SessionId { get; set; }
 
-		[JsonProperty("guilds")] public UnavailableGuild[] UnavailableGuilds { get; set; }
+		[JsonProperty("guilds")] public Guild[] UnavailableGuilds { get; set; }
 	}
 }
