@@ -1,4 +1,5 @@
-﻿using Disharp.Rest;
+﻿using Disharp.Cache;
+using Disharp.Rest;
 using Disharp.WebSocket;
 
 namespace Disharp.Client
@@ -13,10 +14,12 @@ namespace Disharp.Client
 		{
 			WsOptions = config.WsOptions;
 			RestOptions = config.RestOptions;
+			CacheOptions = config.CacheOptions;
 		}
 
 		public DisharpWebSocketClientOptions WsOptions { get; set; } = new DisharpWebSocketClientOptions();
 		public DisharpRestClientOptions RestOptions { get; set; } = new DisharpRestClientOptions();
+		public DisharpCacheOptions CacheOptions { get; set; } = new DisharpCacheOptions();
 		public int LargeThreshold { get; set; } = 50;
 	}
 }

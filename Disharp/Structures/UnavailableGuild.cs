@@ -1,11 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using Disharp.WebSocket.Payloads.SpecificPayloadData;
 
 namespace Disharp.Structures
 {
-	public class UnavailableGuild
+	public class UnavailableGuild : GuildDeletePayload
 	{
-		[JsonProperty("unavailable")] public bool Unavailable { get; set; }
-
-		[JsonProperty("id")] public string Id { get; set; }
+		
 	}
 }

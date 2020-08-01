@@ -13,27 +13,21 @@ namespace Disharp.Rest.Queue
 			return Tasks.Count;
 		}
 
-		public Task<InternalAsyncQueueDeferredTask> Wait()
+		public void Wait()
 		{
-			var next = Tasks.Count != 0
-				? Tasks.ToArray()[Tasks.Count - 1].Promise
-				: new Task<InternalAsyncQueueDeferredTask>(() => new InternalAsyncQueueDeferredTask());
-
 			var promise = new Task<InternalAsyncQueueDeferredTask>(() => new InternalAsyncQueueDeferredTask());
 
 			Tasks.Add(new InternalAsyncQueueDeferredTask
 			{
 				Promise = promise
 			});
-
-			return next;
 		}
 
-		public void Shift()
+		public async void Shift()
 		{
 			var deferred = Tasks.ToArray()[0];
 			ShiftArray.ShiftLeft(Tasks.ToArray(), 1);
-			deferred.Promise.ConfigureAwait(true).GetAwaiter();
+			await Task.Run(() => deferred.Promise);
 		}
 	}
 

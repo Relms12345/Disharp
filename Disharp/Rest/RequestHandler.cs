@@ -9,7 +9,6 @@ using Disharp.Rest.Queue;
 using Disharp.Types;
 using Newtonsoft.Json;
 using RestSharp;
-using RSG;
 using Timer = System.Timers.Timer;
 
 namespace Disharp.Rest
@@ -52,7 +51,7 @@ namespace Disharp.Rest
 
 		public async Task<dynamic> Push(RouteIdentifier routeId, string url, RestReq options)
 		{
-			await Queue.Wait();
+			Queue.Wait();
 			try
 			{
 				var temp = Manager.GlobalTimeout;
@@ -122,6 +121,15 @@ namespace Disharp.Rest
 					case Method.POST:
 						res = Manager.RestClient.Post(restRequest);
 						break;
+					case Method.PUT:
+						res = Manager.RestClient.Put(restRequest);
+						break;
+					case Method.PATCH:
+						res = Manager.RestClient.Patch(restRequest);
+						break;
+					case Method.DELETE:
+						res = Manager.RestClient.Delete(restRequest);
+						break;
 					default:
 						res = Manager.RestClient.Get(restRequest);
 						break;
@@ -167,7 +175,7 @@ namespace Disharp.Rest
 
 			if (res.Headers.ToArray().ToList().Find(x => x.Name == "x-ratelimit-global") != null)
 			{
-				Manager.GlobalTimeout = new Promise();
+				Manager.GlobalTimeout = new Task<bool>(() => true);
 				Thread.Sleep(retryAfter);
 				Manager.GlobalTimeout = null;
 			}
@@ -183,7 +191,6 @@ namespace Disharp.Rest
 					return await MakeRequest(routeId, url, options, retries);
 				case HttpStatusCode.InternalServerError when retries != Client.ClientOptions.RestOptions.Retries:
 					return await MakeRequest(routeId, url, options, ++retries);
-				// throw new HTTPError(res.statusText, res.constructor.name, res.status, options.method as string, url);
 				case HttpStatusCode.InternalServerError:
 					Console.WriteLine("ERROR BITCH!");
 					break;
@@ -203,6 +210,7 @@ namespace Disharp.Rest
 
 		private static dynamic ParseResponse(IRestResponse res)
 		{
+			Console.WriteLine("CALLED");
 			if (res.Headers.ToArray().ToList().Find(x => x.Name == "Content-Type")!.Value!.ToString()!
 				.StartsWith("application/json"))
 				return res.Content;

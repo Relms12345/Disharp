@@ -12,11 +12,4 @@ namespace Disharp.WebSocket.Payloads
 
 		[JsonProperty("t")] public string T { get; set; }
 	}
-
-	public class DiscordGatewayPartialPayload<Type> where Type : notnull
-	{
-		[JsonProperty("op")] public int Op { get; set; }
-
-		[JsonProperty("d")] public Type D { get; set; }
-	}
 }

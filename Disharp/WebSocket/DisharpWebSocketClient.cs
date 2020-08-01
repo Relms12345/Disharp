@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using Disharp.Client;
@@ -14,26 +15,30 @@ namespace Disharp.WebSocket
 	{
 		public DisharpWebSocketClient(DisharpClient client)
 		{
-			_client = client;
+			Client = client;
 		}
 
-		private DisharpClient _client { get; }
-		private WebSocketSharp.WebSocket _webSocketClient { get; set; }
-		private Timer heartbeatTimer { get; set; }
+		private DisharpClient Client { get; }
+		private WebSocketSharp.WebSocket WebSocketClient { get; set; }
+		private Timer HeartbeatTimer { get; set; }
+		private int InitialGuilds { get; set; } = 0;
 
-		internal dynamic _sequence { get; set; }
-		internal string _sessionId { get; set; }
+		internal dynamic Sequence { get; set; }
+		internal string SessionId { get; set; }
 
 		internal async Task ConnectAsync()
 		{
-			_webSocketClient = new WebSocketSharp.WebSocket(
-				$"{_client.ClientOptions.WsOptions.GatewayUrl}?v={_client.ClientOptions.WsOptions.GatewayVersion}&encoding={_client.ClientOptions.WsOptions.EncodingType}");
+			WebSocketClient = new WebSocketSharp.WebSocket(
+				$"{Client.ClientOptions.WsOptions.GatewayUrl}?v={Client.ClientOptions.WsOptions.GatewayVersion}&encoding={Client.ClientOptions.WsOptions.EncodingType}");
 
-			_webSocketClient.OnMessage += _onWsMessage;
+			WebSocketClient.OnMessage += async (sender, msg) =>
+			{
+				await _onWsMessage(sender, msg);
+			};
 
-			_webSocketClient.OnClose += _onWsClose;
+			WebSocketClient.OnClose += _onWsClose;
 
-			_webSocketClient.Connect();
+			WebSocketClient.Connect();
 		}
 
 		private void _onWsClose(object sender, CloseEventArgs args)
@@ -42,7 +47,7 @@ namespace Disharp.WebSocket
 			Console.WriteLine(args.Code);
 		}
 
-		private void _onWsMessage(object sender, MessageEventArgs msg)
+		private async Task _onWsMessage(object sender, MessageEventArgs msg)
 		{
 			var serializedPayload = msg.Data;
 
@@ -52,7 +57,7 @@ namespace Disharp.WebSocket
 					NullValueHandling = NullValueHandling.Ignore
 				});
 
-			if (deserializedPayload.S != 0) _sequence = deserializedPayload.S;
+			if (deserializedPayload.S != 0) Sequence = deserializedPayload.S;
 
 			switch (deserializedPayload.Op)
 			{
@@ -66,10 +71,7 @@ namespace Disharp.WebSocket
 								JsonConvert.DeserializeObject<DiscordGatewayPayload<ReadyPayload>>(
 									JsonConvert.SerializeObject(deserializedPayload));
 
-							foreach (var UnavailableGuild in readyPayload.D.UnavailableGuilds)
-								_client.UnavailableGuilds.Add(UnavailableGuild.Id, UnavailableGuild);
-
-							_client.ClientUser = new ClientUser
+							Client.ClientUser = new ClientUser
 							{
 								Avatar = readyPayload.D.User.Avatar,
 								Bot = readyPayload.D.User.Bot,
@@ -79,12 +81,47 @@ namespace Disharp.WebSocket
 								Username = readyPayload.D.User.Username
 							};
 
-							_sessionId = readyPayload.D.SessionId;
+							SessionId = readyPayload.D.SessionId;
 
-							heartbeatTimer.Start();
-							heartbeatTimer.Elapsed += heartbeat;
+							HeartbeatTimer.Start();
+							HeartbeatTimer.Elapsed += Heartbeat;
 
-							_client.ReadyEvent(EventArgs.Empty);
+							InitialGuilds = readyPayload.D.UnavailableGuilds.Length;
+							
+							break;
+						}
+						case "GUILD_CREATE":
+						{
+							var guildPayload =
+								JsonConvert.DeserializeObject<DiscordGatewayPayload<GuildCreatePayload>>(
+									JsonConvert.SerializeObject(deserializedPayload));
+
+							if (guildPayload.D.Lazy)
+							{
+								InitialGuilds--;
+								await Client.Guilds.GetOrCreateAsync(guildPayload.D.Id, async () => JsonConvert.DeserializeObject<DiscordGatewayPayload<Guild>>(JsonConvert.SerializeObject(guildPayload)).D);
+								if (InitialGuilds == 0)
+								{
+									Client.ReadyEvent(EventArgs.Empty);
+								}
+							}
+							else
+							{
+								var seeIfGuildWasUnavailable = await Client.UnavailableGuilds.GetAsync(guildPayload.D.Id);
+
+								if (seeIfGuildWasUnavailable == null)
+								{
+									var guild = await Client.Guilds.GetOrCreateAsync(guildPayload.D.Id, async () => JsonConvert.DeserializeObject<DiscordGatewayPayload<Guild>>(JsonConvert.SerializeObject(guildPayload)).D);
+									Client.GuildCreateEvent(guild);
+								}
+								else
+								{
+									var guild = await Client.Guilds.GetOrCreateAsync(guildPayload.D.Id, async () => JsonConvert.DeserializeObject<DiscordGatewayPayload<Guild>>(JsonConvert.SerializeObject(guildPayload)).D);
+									await Client.UnavailableGuilds.DeleteAsync(guildPayload.D.Id);
+									Client.GuildAvailableEvent(guild);
+								}
+							}
+
 							break;
 						}
 					}
@@ -97,22 +134,22 @@ namespace Disharp.WebSocket
 						JsonConvert.DeserializeObject<DiscordGatewayPayload<HelloPayload>>(
 							JsonConvert.SerializeObject(deserializedPayload));
 
-					if (heartbeatTimer != null)
+					if (HeartbeatTimer != null)
 					{
-						heartbeatTimer.Elapsed -= heartbeat;
-						heartbeatTimer.Stop();
-						heartbeatTimer.Dispose();
+						HeartbeatTimer.Elapsed -= Heartbeat;
+						HeartbeatTimer.Stop();
+						HeartbeatTimer.Dispose();
 					}
 
-					heartbeatTimer = new Timer(helloPayload.D.HeartbeatInterval);
-					heartbeatTimer.AutoReset = true;
+					HeartbeatTimer = new Timer(helloPayload.D.HeartbeatInterval);
+					HeartbeatTimer.AutoReset = true;
 
-					var identifyPayload = new DiscordGatewayPartialPayload<IdentifyPayload>
+					var identifyPayload = new DiscordGatewayPayload<IdentifyPayload>
 					{
 						Op = 2,
 						D = new IdentifyPayload
 						{
-							Token = _client.Token,
+							Token = Client.Token,
 							Properties = new IdentifyPropertiesPayload
 							{
 								Browser = "Disharp",
@@ -120,9 +157,9 @@ namespace Disharp.WebSocket
 								Os = Environment.OSVersion.Platform.ToString()
 							},
 							Compress = false,
-							LargeThreshold = _client.ClientOptions.LargeThreshold,
-							Presence = _client.ClientOptions.WsOptions.Presence,
-							Intents = _client.ClientOptions.WsOptions.Intents
+							LargeThreshold = Client.ClientOptions.LargeThreshold,
+							Presence = Client.ClientOptions.WsOptions.Presence,
+							Intents = Client.ClientOptions.WsOptions.Intents
 						}
 					};
 
@@ -131,16 +168,16 @@ namespace Disharp.WebSocket
 				}
 			}
 
-			Console.WriteLine(JsonConvert.SerializeObject(deserializedPayload, Formatting.Indented));
+			Console.WriteLine(JsonConvert.SerializeObject(deserializedPayload));
 		}
 
-		private void heartbeat(object sender, ElapsedEventArgs e)
+		private void Heartbeat(object sender, ElapsedEventArgs e)
 		{
 			Console.WriteLine("Sent Heartbeat!");
-			var heartBeatPayload = new DiscordGatewayPartialPayload<dynamic>
+			var heartBeatPayload = new DiscordGatewayPayload<dynamic>
 			{
 				Op = 1,
-				D = _sequence
+				D = Sequence
 			};
 
 			Send(heartBeatPayload);
@@ -150,9 +187,7 @@ namespace Disharp.WebSocket
 		{
 			var payload = JsonConvert.SerializeObject(data);
 
-			Console.WriteLine(payload);
-
-			_webSocketClient.Send(payload);
+			WebSocketClient.Send(payload);
 		}
 	}
 }
